@@ -2,7 +2,7 @@
 EMAIL=ilia.kotusev@revelsystems.com
 FULL=`getent passwd $USER|cut -d: -f5|cut -d, -f1`
 
-docker create --name dev ikotusev/dev:1
+docker create --name dev quay.io/ikotusev/dev:v1.0
 docker start dev
 
 docker exec dev adduser -D -s /bin/bash -g "$FULL,,,$EMAIL" -u `id -u` $USER
