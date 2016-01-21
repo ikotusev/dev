@@ -5,5 +5,6 @@ RUN apk -U add \
     openssh sudo git git-doc git-bash-completion py-virtualenv postgresql-dev gcc python-dev musl-dev linux-headers libffi-dev \
     && \
     chmod +x /usr/bin/direnv && \
+    pip install --upgrade pip || true && \
     rm -r /var/cache/apk/*
 CMD ssh-keygen -A && exec /usr/sbin/sshd -D
