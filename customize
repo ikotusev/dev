@@ -8,7 +8,7 @@ echo "usage: $0 user 'Full Name' email"
 echo user: $USER
 echo full name: $FULL
 echo email: $MAIL
-read -p "Right? (CTRL-C to abort): " _
+read -p "Right? (CTRL-C to abort): "
 
 NUID=`id -u` && test "$NUID" -eq 0 && NUID=1000
 
@@ -18,7 +18,7 @@ docker exec dev su -lc "git config --global user.name \"$FULL\"" $USER
 docker exec dev su -lc "git config --global user.email $MAIL" $USER
 HOME=`docker exec dev getent passwd $USER|cut -d: -f6`
 docker exec dev mkdir -p $HOME/.config/git $HOME/.ssh
-for file in bashrc profile tmux.conf; do cat $file|docker exec -i dev sh -c "cat>$HOME/.$file"; done
+for file in bashrc profile tmux.conf vimrc; do cat $file|docker exec -i dev sh -c "cat>$HOME/.$file"; done
 cat gitignore|docker exec -i dev sh -c "cat>$HOME/.config/git/ignore"
 cat ~/.ssh/id_rsa|docker exec -i dev sh -c "cat>$HOME/.ssh/id_rsa"
 test -f ~/.ssh/id_rsa || echo "put your private key in ~/.ssh/id_rsa or feed it to '|docker exec -i dev sh -c \"cat>$HOME/.ssh/id_rsa\"' from host"
