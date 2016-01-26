@@ -1,30 +1,33 @@
 USER=$1
 FULL=$2
 MAIL=$3
-test -z $USER && USER=`id -un`
-test -z $FULL && FULL=`getent passwd $USER|cut -d: -f5|cut -d, -f1`
-test -z $MAIL && MAIL=$USER@`hostname --fqdn`
+NAME=$4
+test -z "$USER" && USER=`id -un`
+test -z "$FULL" && FULL=`getent passwd $USER|cut -d: -f5|cut -d, -f1`
+test -z "$MAIL" && MAIL=$USER@`hostname --fqdn`
+test -z "$NAME" && NAME=dev
 echo "usage: $0 user 'Full Name' email"
 echo user: $USER
 echo full name: $FULL
 echo email: $MAIL
+echo container name: $NAME
 read -p "Right? (CTRL-C to abort): "
 
 NUID=`id -u` && test "$NUID" -eq 0 && NUID=1000
 
-docker exec dev adduser -D -s /bin/bash -g "$FULL,,,$MAIL" -u "$NUID" $USER
-docker exec dev passwd -u $USER
-docker exec dev su -lc "git config --global user.name \"$FULL\"" $USER
-docker exec dev su -lc "git config --global user.email $MAIL" $USER
-HOME=`docker exec dev getent passwd $USER|cut -d: -f6`
-docker exec dev mkdir -p $HOME/.config/git $HOME/.ssh
-for file in bashrc profile tmux.conf vimrc; do cat $file|docker exec -i dev sh -c "cat>$HOME/.$file"; done
-cat gitignore|docker exec -i dev sh -c "cat>$HOME/.config/git/ignore"
-cat ~/.ssh/id_rsa|docker exec -i dev sh -c "cat>$HOME/.ssh/id_rsa"
-test -f ~/.ssh/id_rsa || echo "put your private key in ~/.ssh/id_rsa or feed it to '|docker exec -i dev sh -c \"cat>$HOME/.ssh/id_rsa\"' from host"
-cat ~/.ssh/id_rsa.pub|docker exec -i dev sh -c "tee $HOME/.ssh/id_rsa.pub >$HOME/.ssh/authorized_keys"
+docker exec $NAME adduser -D -s /bin/bash -g "$FULL,,,$MAIL" -u "$NUID" $USER
+docker exec $NAME passwd -u $USER
+docker exec $NAME su -lc "git config --global user.name \"$FULL\"" $USER
+docker exec $NAME su -lc "git config --global user.email $MAIL" $USER
+HOME=`docker exec $NAME getent passwd $USER|cut -d: -f6`
+docker exec $NAME mkdir -p $HOME/.config/git $HOME/.ssh
+for file in bashrc profile tmux.conf vimrc; do cat $file|docker exec -i $NAME sh -c "cat>$HOME/.$file"; done
+cat gitignore|docker exec -i $NAME sh -c "cat>$HOME/.config/git/ignore"
+cat ~/.ssh/id_rsa|docker exec -i $NAME sh -c "cat>$HOME/.ssh/id_rsa"
+test -f ~/.ssh/id_rsa || echo "put your private key in ~/.ssh/id_rsa or feed it to '|docker exec -i $NAME sh -c \"cat>$HOME/.ssh/id_rsa\"' from host"
+cat ~/.ssh/id_rsa.pub|docker exec -i $NAME sh -c "tee $HOME/.ssh/id_rsa.pub >$HOME/.ssh/authorized_keys"
 test -f ~/.ssh/id_rsa.pub || echo "cd ~/.ssh && ssh-keygen -y -f id_rsa |tee id_rsa.pub >authorized_keys"
-docker exec dev chmod 400 $HOME/.ssh/id_rsa
-docker exec dev sh -c "echo export TERM=$TERM >>$HOME/.bashrc"
-docker exec dev chown -R $USER:$USER $HOME
-docker exec dev sh -c "echo \"%$USER ALL=(ALL) NOPASSWD: ALL\" >/etc/sudoers.d/$USER"
+docker exec $NAME chmod 400 $HOME/.ssh/id_rsa
+docker exec $NAME sh -c "echo export TERM=$TERM >>$HOME/.bashrc"
+docker exec $NAME chown -R $USER:$USER $HOME
+docker exec $NAME sh -c "echo \"%$USER ALL=(ALL) NOPASSWD: ALL\" >/etc/sudoers.d/$USER"
